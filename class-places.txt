@@ -1,0 +1,23 @@
+badlands
+bamboo forest
+barn
+beach
+boardwalk
+boathouse
+botanical garden
+bridge
+cabin-outdoor
+butte
+canal-natural
+canyon
+cliff
+coast
+corn field
+cottage
+cottage garden
+creek
+desert-vegetation
+desert-road
+
+
+'mountain','badlands','canyon','desert_road','desert-vegetation','mountain_path','valley','field_road','pasture','corn_field'
