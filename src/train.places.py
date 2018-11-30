@@ -15,7 +15,9 @@ batch_size = 500
 lambda_recon = 0.9
 lambda_adv = 0.1
 
+# size of overlap of output patch
 overlap_size = 7
+# size of output patch
 hiding_size = 64
 
 trainset_path = '../data/places_trainset.pickle'
@@ -43,6 +45,7 @@ if not os.path.exists( trainset_path ) or not os.path.exists( testset_path ):
 
     trainset.to_pickle( trainset_path )
     testset.to_pickle( testset_path )
+# read dataset
 else:
     trainset = pd.read_pickle( trainset_path )
     testset = pd.read_pickle( testset_path )
@@ -51,17 +54,26 @@ testset.index = range(len(testset))
 testset = testset.ix[np.random.permutation(len(testset))]
 is_train = tf.placeholder( tf.bool )
 
+# learning rate placeholder
 learning_rate = tf.placeholder( tf.float32, [])
+# input image placeholder
 images_tf = tf.placeholder( tf.float32, [batch_size, 128, 128, 3], name="images")
 
+# labels for discriminator (1st batch positive samples and 2nd batch -ve)
 labels_D = tf.concat( [tf.ones([batch_size]), tf.zeros([batch_size])], 0)
+# labels for generator
 labels_G = tf.ones([batch_size])
+# output patch placeholder
 images_hiding = tf.placeholder( tf.float32, [batch_size, hiding_size, hiding_size, 3], name='images_hiding')
 
+# load model
 model = Model()
 
+# main network
 bn1, bn2, bn3, bn4, bn5, bn6, debn4, debn3, debn2, debn1, reconstruction_ori, reconstruction = model.build_reconstruction(images_tf, is_train)
+# discriminator for actual images
 adversarial_pos = model.build_adversarial(images_hiding, is_train)
+# discriminator for generated images
 adversarial_neg = model.build_adversarial(reconstruction, is_train, reuse=True)
 adversarial_all = tf.concat([adversarial_pos, adversarial_neg],0)
 
@@ -71,17 +83,20 @@ mask_recon = tf.reshape(mask_recon, [hiding_size, hiding_size, 1])
 mask_recon = tf.concat([mask_recon]*3, 2)
 mask_overlap = 1 - mask_recon
 
+# compute reconstruction loss (including overlapping region)
 loss_recon_ori = tf.square( images_hiding - reconstruction )
 loss_recon_center = tf.reduce_mean(tf.sqrt( 1e-5 + tf.reduce_sum(loss_recon_ori * mask_recon, [1,2,3]))) / 10.  # Loss for non-overlapping region
 loss_recon_overlap = tf.reduce_mean(tf.sqrt( 1e-5 + tf.reduce_sum(loss_recon_ori * mask_overlap, [1,2,3]))) # Loss for overlapping region
 loss_recon = loss_recon_center + loss_recon_overlap
 
+# compute adverserial losses
 loss_adv_D = tf.reduce_mean( tf.nn.sigmoid_cross_entropy_with_logits(logits=adversarial_all, labels=labels_D))
 loss_adv_G = tf.reduce_mean( tf.nn.sigmoid_cross_entropy_with_logits(logits=adversarial_neg, labels=labels_G))
 
 loss_G = loss_adv_G * lambda_adv + loss_recon * lambda_recon
 loss_D = loss_adv_D * lambda_adv
 
+# filter out weight variables and apply weight decay
 var_G = filter( lambda x: x.name.startswith('GEN'), tf.trainable_variables())
 var_D = filter( lambda x: x.name.startswith('DIS'), tf.trainable_variables())
 
@@ -93,6 +108,7 @@ loss_D += weight_decay_rate * tf.reduce_mean(tf.stack( map(lambda x: tf.nn.l2_lo
 
 sess = tf.InteractiveSession()
 
+# compute gradients for G and D
 optimizer_G = tf.train.AdamOptimizer( learning_rate=learning_rate )
 grads_vars_G = optimizer_G.compute_gradients( loss_G, var_list=var_G )
 grads_vars_G = map(lambda gv: gv if gv[0] is None else [tf.clip_by_value(gv[0], -10., 10.), gv[1]], grads_vars_G)
@@ -128,11 +144,13 @@ for epoch in range(n_epochs):
         is_none = np.sum(map(lambda x: x is None, images_ori))
         if is_none > 0: continue
 
+        # get cropped images
         images_crops = map(lambda x: crop_random(x), images_ori)
         images, crops,_,_ = zip(*images_crops)
 
-        # Printing activations every 10 iterations
+        # Printing activations every 100 iterations
         if iters % 100 == 0:
+            # do validation
             test_image_paths = testset[:batch_size]['image_path'].values
             test_images_ori = map(lambda x: load_image(x), test_image_paths)
 
@@ -147,7 +165,7 @@ for epoch in range(n_epochs):
                         is_train: False
                         })
 
-            # Generate result every 1000 iterations
+            # Generate result images every 500 iterations
             if iters % 500 == 0:
                 ii = 0
                 for rec_val, img,x,y in zip(reconstruction_vals, test_images, xs, ys):
