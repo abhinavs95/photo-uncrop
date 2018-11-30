@@ -21,3 +21,19 @@ desert-road
 
 
 'mountain','badlands','canyon','desert_road','desert-vegetation','mountain_path','valley','field_road','pasture','corn_field'
+
+
+snowfield
+farm
+ocean
+underwater - ocean deep
+underwater - coral reef
+hayfield
+woodland
+field road
+snowfield
+sky
+railroad track?
+lawn
+ocean
+butte
