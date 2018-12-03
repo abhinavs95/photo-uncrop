@@ -23,7 +23,6 @@ def load_image( path, pre_height=146, pre_width=146, height=128, width=128 ):
     # if img.shape[2] == 4: img=img[:,:,:3]
     # if img.shape[2] > 4: return None
     #print(img.shape)
-    return img
     # short_edge = min( img.shape[:2] )
     # yy = int((img.shape[0] - short_edge) / 2)
     # xx = int((img.shape[1] - short_edge) / 2)
@@ -35,7 +34,7 @@ def load_image( path, pre_height=146, pre_width=146, height=128, width=128 ):
 
     # resized_img = resized_img[ rand_y:rand_y+height, rand_x:rand_x+width, : ]
 
-    # return (resized_img * 2)-1 #(resized_img - 127.5)/127.5
+    return (img * 2)-1
 
 def crop_random(image_ori, width=176,height=176, x=None, y=None, overlap=7):
     if image_ori is None: return None
