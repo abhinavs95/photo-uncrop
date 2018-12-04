@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import cv2
 from model_as import *
-from util_akm import *
+from util_as import *
 
 n_epochs = 10000
 learning_rate_val = 0.0003
@@ -225,7 +225,6 @@ for epoch in range(n_epochs):
                     learning_rate: learning_rate_val,
                     is_train: True
                     })
-        print('################REACHED############')
 
         _, loss_D_val, adv_pos_val, adv_neg_val = sess.run(
                 [train_op_D, loss_D, adversarial_pos, adversarial_neg],
