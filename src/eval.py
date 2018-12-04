@@ -1,3 +1,5 @@
+
+#IMAGE SIZE THAT IS PASSED SHOULD BE EQUAL
 def dist1(img1,img2):
     return np.abs(img1,img2)
 
