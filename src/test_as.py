@@ -64,7 +64,7 @@ for start,end in zip(
         rec_con = (255. * (img+1)/2.).astype(int)
         img_ori = (255. * (img_ori+1)/2.).astype(int)
 
-        rec_hid[border_size : hiding_size - border_size, border_size : hiding_size - border_size] = rec_con[border_size : hiding_size - border_size, border_size : hiding_size - border_size]
+        #rec_hid[border_size : hiding_size - border_size, border_size : hiding_size - border_size] = rec_con[border_size : hiding_size - border_size, border_size : hiding_size - border_size]
         cv2.imwrite( os.path.join(result_path, 'img_'+str(ii)+'.jpg'), rec_hid)
         cv2.imwrite(os.path.join(result_path, 'img_'+str(ii)+'.ori.jpg'), img_ori)
         ii += 1

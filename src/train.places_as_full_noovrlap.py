@@ -5,9 +5,9 @@ import pandas as pd
 import numpy as np
 import cv2
 from model_as import *
-from util_as import *
+from util_as_full import *
 
-n_epochs = 10000
+n_epochs = 50
 learning_rate_val = 0.0003
 weight_decay_rate =  0.00001
 momentum = 0.9
@@ -25,9 +25,9 @@ border_size = 40
 trainset_path = '../data/places_trainset.pickle'
 testset_path  = '../data/places_testset.pickle'
 dataset_path = '/home/as5414/places/data_256'
-model_path = '../models/places/'
-result_path= '../results/places/'
-pretrained_model_path = '../models/places/model-8'
+model_path = '../models/run3_full_noovrlap/'
+result_path= '../results/run3_full_noovrlap/'
+pretrained_model_path = None#'../models/places/model-0'
 
 if not os.path.exists(model_path):
     os.makedirs( model_path )
@@ -82,17 +82,17 @@ adversarial_neg = model.build_adversarial(reconstruction, is_train, reuse=True)
 adversarial_all = tf.concat([adversarial_pos, adversarial_neg],0)
 
 # compute masks for recon and overlap regions
-mask_recon = tf.pad(tf.ones([hiding_size - 2*border_size, hiding_size - 2*border_size]), [[border_size,border_size], [border_size,border_size]])
-mask_recon = tf.reshape(mask_recon, [hiding_size, hiding_size, 1])
-mask_recon = tf.concat([mask_recon]*3, 2)
-mask_overlap = mask_recon * (1-tf.concat([tf.reshape(tf.pad(tf.ones([hiding_size - 2*(border_size+overlap_size), hiding_size - 2*(border_size+overlap_size)]), [[(border_size+overlap_size),(border_size+overlap_size)], [(border_size+overlap_size),(border_size+overlap_size)]]), [hiding_size, hiding_size, 1])]*3,2))
-mask_recon = 1 - mask_recon
+# mask_recon = tf.pad(tf.ones([hiding_size - 2*border_size, hiding_size - 2*border_size]), [[border_size,border_size], [border_size,border_size]])
+# mask_recon = tf.reshape(mask_recon, [hiding_size, hiding_size, 1])
+# mask_recon = tf.concat([mask_recon]*3, 2)
+# mask_overlap = mask_recon * (1-tf.concat([tf.reshape(tf.pad(tf.ones([hiding_size - 2*(border_size+overlap_size), hiding_size - 2*(border_size+overlap_size)]), [[(border_size+overlap_size),(border_size+overlap_size)], [(border_size+overlap_size),(border_size+overlap_size)]]), [hiding_size, hiding_size, 1])]*3,2))
+# mask_recon = 1 - mask_recon
 #print(mask_recon.shape,mask_overlap.shape)
 # compute reconstruction loss (including overlapping region)
 loss_recon_ori = tf.square( images_hiding - reconstruction )
-loss_recon_center = tf.reduce_mean(tf.sqrt( 1e-5 + tf.reduce_sum(loss_recon_ori * mask_recon, [1,2,3]))) / 10.  # Loss for non-overlapping region
-loss_recon_overlap = tf.reduce_mean(tf.sqrt( 1e-5 + tf.reduce_sum(loss_recon_ori * mask_overlap, [1,2,3]))) # Loss for overlapping region
-loss_recon = loss_recon_center + loss_recon_overlap
+loss_recon = tf.reduce_mean(tf.sqrt( 1e-5 + tf.reduce_sum(loss_recon_ori, [1,2,3]))) / 10.  # Loss for non-overlapping region
+# loss_recon_overlap = tf.reduce_mean(tf.sqrt( 1e-5 + tf.reduce_sum(loss_recon_ori * mask_overlap, [1,2,3]))) # Loss for overlapping region
+# loss_recon = loss_recon_center + loss_recon_overlap
 
 # compute adverserial losses
 loss_adv_D = tf.reduce_mean( tf.nn.sigmoid_cross_entropy_with_logits(logits=adversarial_all, labels=labels_D))
@@ -181,7 +181,7 @@ for epoch in range(n_epochs):
                     rec_hid = (255. * (rec_val+1)/2.).astype(int)
                     rec_con = (255. * (img+1)/2.).astype(int)
 
-                    rec_hid[border_size : hiding_size - border_size, border_size : hiding_size - border_size] = rec_con[border_size : hiding_size - border_size, border_size : hiding_size - border_size]
+                    #rec_hid[border_size : hiding_size - border_size, border_size : hiding_size - border_size] = rec_con[border_size : hiding_size - border_size, border_size : hiding_size - border_size]
                     cv2.imwrite( os.path.join(result_path, 'img_'+str(ii)+'.'+str(int(iters/100))+'.jpg'), rec_hid)
                     ii += 1
                     if ii > 50: break
@@ -190,9 +190,9 @@ for epoch in range(n_epochs):
                     ii = 0
                     for test_image in test_images_ori:
                         test_image = (255. * (test_image+1)/2.).astype(int)
-                        test_image1 = np.zeros_like(test_image)
-                        test_image1[border_size : hiding_size - border_size, border_size : hiding_size - border_size] = test_image[border_size : hiding_size - border_size, border_size : hiding_size - border_size]
-                        cv2.imwrite( os.path.join(result_path, 'img_'+str(ii)+'.ori.jpg'), test_image1)
+                        #test_image1 = np.zeros_like(test_image)
+                        #test_image1[border_size : hiding_size - border_size, border_size : hiding_size - border_size] = test_image[border_size : hiding_size - border_size, border_size : hiding_size - border_size]
+                        cv2.imwrite( os.path.join(result_path, 'img_'+str(ii)+'.ori.jpg'), test_image)
                         ii += 1
                         if ii > 50: break
 
@@ -241,7 +241,7 @@ for epoch in range(n_epochs):
         iters += 1
 
 
-    saver.save(sess, model_path + 'model', global_step=epoch+int(pretrained_model_path[-1]))
+    saver.save(sess, model_path + 'model', global_step=epoch)#+int(pretrained_model_path[-1]))
     learning_rate_val *= 0.99
 
 
