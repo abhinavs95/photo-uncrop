@@ -23,7 +23,7 @@ def crop_random(image_ori, width=176,height=176, x=None, y=None, overlap=7):
     random_x = np.random.randint(overlap,width-overlap) if y is None else y
     
     image1 = image_ori.copy()
-    crop = image_ori.copy()
+    crop = np.zeros_like(image_ori)#image_ori.copy()
     image = np.zeros_like(image_ori)
     image[40-overlap:40+height+overlap,40-overlap:40+width+overlap] = image1[40-overlap:40+height+overlap,40-overlap:40+width+overlap]
     return image, crop, 0,0

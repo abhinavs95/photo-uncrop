@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import cv2
 from model_as import *
-from util_as import *
+from util_as_full_test import *
 
 
 batch_size = 64
@@ -19,8 +19,8 @@ border_size = 40
 
 
 testset_path  = '../data/places_testset.pickle'
-result_path= '../results/test/'
-pretrained_model_path = '../models/places/model-50'
+result_path= '../results/test3/'
+pretrained_model_path = '../models/run3_full_noovrlap/model-50'
 testset = pd.read_pickle( testset_path )
 is_train = tf.placeholder( tf.bool )
 
@@ -64,7 +64,6 @@ for start,end in zip(
         rec_con = (255. * (img+1)/2.).astype(int)
         img_ori = (255. * (img_ori+1)/2.).astype(int)
 
-        #rec_hid[border_size : hiding_size - border_size, border_size : hiding_size - border_size] = rec_con[border_size : hiding_size - border_size, border_size : hiding_size - border_size]
         cv2.imwrite( os.path.join(result_path, 'img_'+str(ii)+'.jpg'), rec_hid)
         cv2.imwrite(os.path.join(result_path, 'img_'+str(ii)+'.ori.jpg'), img_ori)
         ii += 1
