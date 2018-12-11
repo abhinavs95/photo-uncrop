@@ -6,7 +6,7 @@ This repository contains code and usage instructions for our COMS 4731 project.
 The goal of this project is to build a model that extrapolates cropped images of outdoor scenes. We use an encoder-decoder architecture to capture contextual information from input cropped images and generate an extrapolated image based on the context. We also use a Generative Adversarial Network in conjunction with the encoder-decoder framework to obtain highly detailed results. Finally, we use a post-processing technique called seamless cloning on the generated output to further improve the quality of the results. The complete model architecture is shown below:
 
 <p align="center">
-<img src="images/arc.png" width="60%"/>
+<img src="images/arc.png" width="100%"/>
 </p>
 
 ## Dependencies
@@ -70,9 +70,10 @@ Our pretrained models can be downloaded from here:
 * Unmask reconstruction loss: 
 
 ## Sample results
+Below are some results from the test set. The top row is the cropped input image and the bottom row is the post-processed output.
 
 <p align="center">
-<img src="images/Results.png" width="60%"/>
+<img src="images/res.png" width="100%"/>
 </p>
 
 ## References
