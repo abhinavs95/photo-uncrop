@@ -67,7 +67,7 @@ Path to ground-truth and generated images need to be specified in the script.
 Our trained models can be downloaded from here (Lionmail access only):
 
 * Mask reconstruction loss: https://drive.google.com/open?id=1NpoMKJXmJMkEq4kAeNlRJtgqHHqXfn6B
-* Unmask reconstruction loss: 
+* Unmask reconstruction loss: https://drive.google.com/open?id=1K5vag1yXdrgDxjSKIRNH4w1ovnTYPNFn
 
 ## Sample results
 Below are some results from the test set. The top row is the cropped input image and the bottom row is the post-processed output.
