@@ -122,17 +122,21 @@ class Model():
             conv6 = self.new_conv_layer(bn5, [4,4,512,4000], stride=2, padding='VALID', name='conv6')
             bn6 = self.leaky_relu(self.batchnorm(conv6, is_train, name='bn6'))
 
-            deconv4 = self.new_deconv_layer( bn6, [4,4,512,4000], conv5.get_shape().as_list(), padding='VALID', stride=2, name="deconv4")
+            deconv6 = self.new_deconv_layer( bn6, [4,4,512,4000], conv5.get_shape().as_list(), padding='VALID', stride=2, name="deconv6")
+            debn6 = tf.nn.relu(self.batchnorm(deconv6, is_train, name='debn6'))
+            deconv5 = self.new_deconv_layer( debn6, [4,4,256,512], conv4.get_shape().as_list(), stride=2, name="deconv5")
+            debn5 = tf.nn.relu(self.batchnorm(deconv5, is_train, name='debn5'))
+            deconv4 = self.new_deconv_layer( debn5, [4,4,128,256], conv3.get_shape().as_list(), stride=2, name="deconv4")
             debn4 = tf.nn.relu(self.batchnorm(deconv4, is_train, name='debn4'))
-            deconv3 = self.new_deconv_layer( debn4, [4,4,256,512], conv4.get_shape().as_list(), stride=2, name="deconv3")
+            deconv3 = self.new_deconv_layer( debn4, [4,4,64,128], conv2.get_shape().as_list(), stride=2, name="deconv3")
             debn3 = tf.nn.relu(self.batchnorm(deconv3, is_train, name='debn3'))
-            deconv2 = self.new_deconv_layer( debn3, [4,4,128,256], conv3.get_shape().as_list(), stride=2, name="deconv2")
+            deconv2 = self.new_deconv_layer( debn3, [4,4,64,64], conv1.get_shape().as_list(), stride=2, name="deconv2")
             debn2 = tf.nn.relu(self.batchnorm(deconv2, is_train, name='debn2'))
-            deconv1 = self.new_deconv_layer( debn2, [4,4,64,128], conv2.get_shape().as_list(), stride=2, name="deconv1")
-            debn1 = tf.nn.relu(self.batchnorm(deconv1, is_train, name='debn1'))
-            recon = self.new_deconv_layer( debn1, [4,4,3,64], [batch_size,64,64,3], stride=2, name="recon")
+            #deconv1 = self.new_deconv_layer( debn2, [4,4,64,64], [batch_size,256,256,64], stride=2, name="deconv1")
+            #debn1 = tf.nn.relu(self.batchnorm(deconv1, is_train, name='debn1'))
+            recon = self.new_deconv_layer( debn2, [4,4,3,64], [batch_size,256,256,3], stride=2, name="recon")
 
-        return bn1, bn2, bn3, bn4, bn5, bn6, debn4, debn3, debn2, debn1, recon, tf.nn.tanh(recon)
+        return bn1, bn2, bn3, bn4, bn5, bn6, debn6, debn5, debn4, debn3, debn2, recon, tf.nn.tanh(recon)
 
     def build_adversarial(self, images, is_train, reuse=None):
         with tf.variable_scope('DIS', reuse=reuse):
@@ -144,8 +148,12 @@ class Model():
             bn3 = self.leaky_relu(self.batchnorm(conv3, is_train, name='bn3'))
             conv4 = self.new_conv_layer(bn3, [4,4,256,512], stride=2, name="conv4")
             bn4 = self.leaky_relu(self.batchnorm(conv4, is_train, name='bn4'))
+            conv5 = self.new_conv_layer(bn4, [4,4,512,1024], stride=2, name="conv5")
+            bn5 = self.leaky_relu(self.batchnorm(conv5, is_train, name='bn5'))
+            conv6 = self.new_conv_layer(bn5, [4,4,1024,2048], stride=2, name="conv6")
+            bn6 = self.leaky_relu(self.batchnorm(conv6, is_train, name='bn6'))
 
-            output = self.new_fc_layer( bn4, output_size=1, name='output')
+            output = self.new_fc_layer( bn6, output_size=1, name='output')
 
         return output[:,0]
 

@@ -5,27 +5,29 @@ import pandas as pd
 import numpy as np
 import cv2
 from model import *
-from util import *
+from util_unmask import *
 
-n_epochs = 10000
+n_epochs = 50
 learning_rate_val = 0.0003
 weight_decay_rate =  0.00001
 momentum = 0.9
-batch_size = 500
+batch_size = 64
 lambda_recon = 0.9
 lambda_adv = 0.1
 
 # size of overlap of output patch
 overlap_size = 7
 # size of output patch
-hiding_size = 64
+hiding_size = 256
+# size of border
+border_size = 40
 
 trainset_path = '../data/places_trainset.pickle'
 testset_path  = '../data/places_testset.pickle'
 dataset_path = '/home/as5414/places/data_256'
-model_path = '../models/places/'
-result_path= '../results/places/'
-pretrained_model_path = '../models/places/model-0'
+model_path = '../models/run3_full_noovrlap/'
+result_path= '../results/run3_full_noovrlap/'
+pretrained_model_path = None#'../models/places/model-0'
 
 if not os.path.exists(model_path):
     os.makedirs( model_path )
@@ -57,7 +59,7 @@ is_train = tf.placeholder( tf.bool )
 # learning rate placeholder
 learning_rate = tf.placeholder( tf.float32, [])
 # input image placeholder
-images_tf = tf.placeholder( tf.float32, [batch_size, 128, 128, 3], name="images")
+images_tf = tf.placeholder( tf.float32, [batch_size, 256, 256, 3], name="images")
 
 # labels for discriminator (1st batch positive samples and 2nd batch -ve)
 labels_D = tf.concat( [tf.ones([batch_size]), tf.zeros([batch_size])], 0)
@@ -70,24 +72,20 @@ images_hiding = tf.placeholder( tf.float32, [batch_size, hiding_size, hiding_siz
 model = Model()
 
 # main network
-bn1, bn2, bn3, bn4, bn5, bn6, debn4, debn3, debn2, debn1, reconstruction_ori, reconstruction = model.build_reconstruction(images_tf, is_train)
+bn1, bn2, bn3, bn4, bn5, bn6, debn6, debn5, debn4, debn3, debn2, reconstruction_ori, reconstruction = model.build_reconstruction(images_tf, is_train)
+#print(debn1.shape,debn2.shape,debn3.shape,debn4.shape,debn5.shape,debn6.shape,reconstruction_ori.shape)
+#print('##########')
 # discriminator for actual images
 adversarial_pos = model.build_adversarial(images_hiding, is_train)
 # discriminator for generated images
 adversarial_neg = model.build_adversarial(reconstruction, is_train, reuse=True)
 adversarial_all = tf.concat([adversarial_pos, adversarial_neg],0)
 
-# Applying bigger loss for overlapping region
-mask_recon = tf.pad(tf.ones([hiding_size - 2*overlap_size, hiding_size - 2*overlap_size]), [[overlap_size,overlap_size], [overlap_size,overlap_size]])
-mask_recon = tf.reshape(mask_recon, [hiding_size, hiding_size, 1])
-mask_recon = tf.concat([mask_recon]*3, 2)
-mask_overlap = 1 - mask_recon
-
 # compute reconstruction loss (including overlapping region)
 loss_recon_ori = tf.square( images_hiding - reconstruction )
-loss_recon_center = tf.reduce_mean(tf.sqrt( 1e-5 + tf.reduce_sum(loss_recon_ori * mask_recon, [1,2,3]))) / 10.  # Loss for non-overlapping region
-loss_recon_overlap = tf.reduce_mean(tf.sqrt( 1e-5 + tf.reduce_sum(loss_recon_ori * mask_overlap, [1,2,3]))) # Loss for overlapping region
-loss_recon = loss_recon_center + loss_recon_overlap
+loss_recon = tf.reduce_mean(tf.sqrt( 1e-5 + tf.reduce_sum(loss_recon_ori, [1,2,3]))) / 10.  # Loss for non-overlapping region
+# loss_recon_overlap = tf.reduce_mean(tf.sqrt( 1e-5 + tf.reduce_sum(loss_recon_ori * mask_overlap, [1,2,3]))) # Loss for overlapping region
+# loss_recon = loss_recon_center + loss_recon_overlap
 
 # compute adverserial losses
 loss_adv_D = tf.reduce_mean( tf.nn.sigmoid_cross_entropy_with_logits(logits=adversarial_all, labels=labels_D))
@@ -125,8 +123,9 @@ tf.initialize_all_variables().run()
 
 if pretrained_model_path is not None and os.path.exists( pretrained_model_path ):
     saver.restore( sess, pretrained_model_path )
-
-iters = 0
+    iters = 774*int(pretrained_model_path[-1]) - 1
+else:
+    iters = 0
 
 loss_D_val = 0.
 loss_G_val = 0.
@@ -157,8 +156,8 @@ for epoch in range(n_epochs):
             test_images_crop = map(lambda x: crop_random(x, x=32, y=32), test_images_ori)
             test_images, test_crops, xs,ys = zip(*test_images_crop)
 
-            reconstruction_vals, recon_ori_vals, bn1_val,bn2_val,bn3_val,bn4_val,bn5_val,bn6_val,debn4_val, debn3_val, debn2_val, debn1_val, loss_G_val, loss_D_val = sess.run(
-                    [reconstruction, reconstruction_ori, bn1,bn2,bn3,bn4,bn5,bn6,debn4, debn3, debn2, debn1, loss_G, loss_D],
+            reconstruction_vals, recon_ori_vals, bn1_val,bn2_val,bn3_val,bn4_val,bn5_val,bn6_val,debn6_val,debn5_val,debn4_val, debn3_val, debn2_val, loss_G_val, loss_D_val = sess.run(
+                    [reconstruction, reconstruction_ori, bn1,bn2,bn3,bn4,bn5,bn6,debn6,debn5,debn4, debn3, debn2, loss_G, loss_D],
                     feed_dict={
                         images_tf: test_images,
                         images_hiding: test_crops,
@@ -172,8 +171,8 @@ for epoch in range(n_epochs):
                     rec_hid = (255. * (rec_val+1)/2.).astype(int)
                     rec_con = (255. * (img+1)/2.).astype(int)
 
-                    rec_con[y:y+64, x:x+64] = rec_hid
-                    cv2.imwrite( os.path.join(result_path, 'img_'+str(ii)+'.'+str(int(iters/100))+'.jpg'), rec_con)
+                    #rec_hid[border_size : hiding_size - border_size, border_size : hiding_size - border_size] = rec_con[border_size : hiding_size - border_size, border_size : hiding_size - border_size]
+                    cv2.imwrite( os.path.join(result_path, 'img_'+str(ii)+'.'+str(int(iters/100))+'.jpg'), rec_hid)
                     ii += 1
                     if ii > 50: break
 
@@ -181,7 +180,8 @@ for epoch in range(n_epochs):
                     ii = 0
                     for test_image in test_images_ori:
                         test_image = (255. * (test_image+1)/2.).astype(int)
-                        test_image[32:32+64,32:32+64] = 0
+                        #test_image1 = np.zeros_like(test_image)
+                        #test_image1[border_size : hiding_size - border_size, border_size : hiding_size - border_size] = test_image[border_size : hiding_size - border_size, border_size : hiding_size - border_size]
                         cv2.imwrite( os.path.join(result_path, 'img_'+str(ii)+'.ori.jpg'), test_image)
                         ii += 1
                         if ii > 50: break
@@ -193,10 +193,11 @@ for epoch in range(n_epochs):
             print bn4_val.max(), bn4_val.min()
             print bn5_val.max(), bn5_val.min()
             print bn6_val.max(), bn6_val.min()
+            print debn6_val.max(), debn6_val.min()
+            print debn5_val.max(), debn5_val.min()
             print debn4_val.max(), debn4_val.min()
             print debn3_val.max(), debn3_val.min()
             print debn2_val.max(), debn2_val.min()
-            print debn1_val.max(), debn1_val.min()
             print recon_ori_vals.max(), recon_ori_vals.min()
             print reconstruction_vals.max(), reconstruction_vals.min()
             print loss_G_val, loss_D_val
@@ -207,15 +208,14 @@ for epoch in range(n_epochs):
                 ipdb.set_trace()
 
         # Generative Part is updated every iteration
-        _, loss_G_val, adv_pos_val, adv_neg_val, loss_recon_val, loss_adv_G_val, reconstruction_vals, recon_ori_vals, bn1_val,bn2_val,bn3_val,bn4_val,bn5_val,bn6_val,debn4_val, debn3_val, debn2_val, debn1_val = sess.run(
-                [train_op_G, loss_G, adversarial_pos, adversarial_neg, loss_recon, loss_adv_G, reconstruction, reconstruction_ori, bn1,bn2,bn3,bn4,bn5,bn6,debn4, debn3, debn2, debn1],
+        _, loss_G_val, adv_pos_val, adv_neg_val, loss_recon_val, loss_adv_G_val, reconstruction_vals, recon_ori_vals, bn1_val,bn2_val,bn3_val,bn4_val,bn5_val,bn6_val,debn6_val,debn5_val,debn4_val, debn3_val, debn2_val= sess.run(
+                [train_op_G, loss_G, adversarial_pos, adversarial_neg, loss_recon, loss_adv_G, reconstruction, reconstruction_ori, bn1,bn2,bn3,bn4,bn5,bn6,debn6,debn5,debn4, debn3, debn2],
                 feed_dict={
                     images_tf: images,
                     images_hiding: crops,
                     learning_rate: learning_rate_val,
                     is_train: True
                     })
-
 
         _, loss_D_val, adv_pos_val, adv_neg_val = sess.run(
                 [train_op_D, loss_D, adversarial_pos, adversarial_neg],
@@ -231,7 +231,7 @@ for epoch in range(n_epochs):
         iters += 1
 
 
-    saver.save(sess, model_path + 'model', global_step=epoch)
+    saver.save(sess, model_path + 'model', global_step=epoch)#+int(pretrained_model_path[-1]))
     learning_rate_val *= 0.99
 
 

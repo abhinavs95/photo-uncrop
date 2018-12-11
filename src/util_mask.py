@@ -19,8 +19,6 @@ def load_image( path, pre_height=146, pre_width=146, height=128, width=128 ):
 
 def crop_random(image_ori, width=176,height=176, x=None, y=None, overlap=7):
     if image_ori is None: return None
-    random_y = np.random.randint(overlap,height-overlap) if x is None else x
-    random_x = np.random.randint(overlap,width-overlap) if y is None else y
     
     image1 = image_ori.copy()
     crop = image_ori.copy()
