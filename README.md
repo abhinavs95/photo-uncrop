@@ -57,16 +57,16 @@ python post-proc.py
 ```
 Path to input and raw output images need to be specified in the script.
 ### Evaluation
-To compute values for thr evaluation metrics on the test set:
+To compute values for the evaluation metrics on the test set:
 ```
 python eval.py
 ```
 Path to ground-truth and generated images need to be specified in the script.
 
 ## Pre-trained model
-Our pretrained models can be downloaded from here:
+Our trained models can be downloaded from here (Lionmail access only):
 
-* Mask reconstruction loss:
+* Mask reconstruction loss: https://drive.google.com/open?id=1NpoMKJXmJMkEq4kAeNlRJtgqHHqXfn6B
 * Unmask reconstruction loss: 
 
 ## Sample results
