@@ -3,6 +3,11 @@
 This repository contains code and usage instructions for our COMS 4731 project.
 
 ## Description
+The goal of this project is to build a model that extrapolates cropped images of outdoor scenes. We use an encoder-decoder architecture to capture contextual information from input cropped images and generate an extrapolated image based on the context. We also use a Generative Adversarial Network in conjunction with the encoder-decoder framework to obtain highly detailed results. Finally, we use a post-processing technique called seamless cloning on the generated output to further improve the quality of the results. The complete model architecture is shown below:
+
+<p align="center">
+<img src="images/arc.png" width="60%"/>
+</p>
 
 ## Dependencies
 We developed the code using Tensorflow for python 2 in Anaconda. Also the following packages need to be installed:
@@ -32,16 +37,46 @@ To train the model with unmask reconstruction loss:
 ```
 python train_unmask.py
 ```
-### Testing
-To generate test results using a trained model
+Each of these scripts trains the model on the training set and saves the model weights at the end of each epoch. It also generates output for 50 test images and saves it every 500 iterations.
 
+### Testing
+To generate test results using a trained model with mask reconstruction loss:
+```
+python test_mask.py
+```
+To generate test results using a trained model with unmask reconstruction loss:
+```
+python test_unmask.py
+```
+Each of these scripts generates the raw output for all test images and saves it along with the ground-truth images.
 
 ### Post-processing
-
+To generate the overlayed and seamless cloned output:
+```
+python post-proc.py
+```
+Path to input and raw output images need to be specified in the script.
 ### Evaluation
+To compute values for thr evaluation metrics on the test set:
+```
+python eval.py
+```
+Path to ground-truth and generated images need to be specified in the script.
 
 ## Pre-trained model
+Our pretrained models can be downloaded from here:
+
+* Mask reconstruction loss:
+* Unmask reconstruction loss: 
+
+## Sample results
+
+<p align="center">
+<img src="images/Results.png" width="60%"/>
+</p>
 
 ## References
 
-
+* Context Encoders: Feature Learning by Inpainting - https://arxiv.org/abs/1604.07379
+* Tensorflow implementation of the paper above - https://github.com/jazzsaxmafia/Inpainting
+* Seamless cloning - https://docs.opencv.org/3.0-beta/modules/photo/doc/cloning.html
