@@ -78,6 +78,7 @@ Below are some results from the test set. The top row is the cropped input image
 
 ## References
 
+* Project paper - [report.pdf](docs/report.pdf)
 * Context Encoders: Feature Learning by Inpainting - https://arxiv.org/abs/1604.07379
 * Tensorflow implementation of the paper above - https://github.com/jazzsaxmafia/Inpainting
 * Seamless cloning - https://docs.opencv.org/3.0-beta/modules/photo/doc/cloning.html
